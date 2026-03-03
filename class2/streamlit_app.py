@@ -9,7 +9,7 @@ Demonstrates a CNN deployed as a FastAPI, including:
 
 Usage:
     # Terminal 1 — start the API
-    uvicorn api:app --reload --port 8000
+    uvicorn api_multimodel:app --reload --port 8000
 
     # Terminal 2 — start the UI
     streamlit run streamlit_app.py

@@ -58,6 +58,7 @@ class TestCanaryDeployment:
         """100 requests should show roughly 70/30 split"""
         versions = {"v1.0": 0, "v2.0": 0}
         for i in range(100):
+            _rate_store.clear()  # bypass rate limiter for traffic test
             img = create_test_image(100, 100, (i * 2, 0, 0))
             response = client.post("/predict", files={"file": (f"test_{i}.png", img, "image/png")})
             assert response.status_code == 200
@@ -281,6 +282,7 @@ class TestPerformanceSLAs:
         total = len(test_images_set)
 
         for i, img in enumerate(test_images_set):
+            _rate_store.clear()  # bypass rate limiter for bulk test
             response = client.post(
                 "/predict?model_version=v1",
                 files={"file": (f"test_{i}.png", img, "image/png")}

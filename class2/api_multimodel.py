@@ -608,7 +608,7 @@ async def get_stats():
             "mean_ms": round(df['latency_ms'].mean(), 2),
             "min_ms": round(df['latency_ms'].min(), 2),
             "max_ms": round(df['latency_ms'].max(), 2),
-            "std_ms": round(df['latency_ms'].std(), 2)
+            "std_ms": round(df['latency_ms'].std(ddof=0), 2)
         },
         "confidence_stats": {
             "mean": round(df['confidence'].mean(), 4),

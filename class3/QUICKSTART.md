@@ -100,7 +100,6 @@ Then **Lab 3** (~60 min) combines all three into a production testing checklist.
 - Writing `pytest`-style test classes with Arrange-Act-Assert
 - Accuracy threshold as a deployment quality gate
 - Latency SLA testing (p99 matters for ADAS safety)
-- How a GitHub Actions CI/CD pipeline looks
 
 **Key teaching moments:**
 
@@ -109,9 +108,10 @@ Then **Lab 3** (~60 min) combines all three into a production testing checklist.
 | Test naming | Section 4 | "`test_health_returns_200` vs `test_health` — which tells you more on failure?" |
 | Quality gate | Section 5 | "10% threshold now, 70% with trained weights — set it before training" |
 | Tail latency | Section 6 | "p99 matters. 1 in 100 ADAS requests at 500ms = crashes" |
-| CI YAML | Section 8 | "Every `git push` runs all 26 tests — show the diagram" |
 
 **Test count**: 26 tests across 3 categories (16 API, 5 accuracy, 5 latency)
+
+**CI/CD**: The actual GitHub Actions workflow is at `.github/workflows/ml-tests.yml`. Show this file to students after the notebook — it runs `test_part1.py` and `test_part3.py` from class2 plus lint checks on every push.
 
 ---
 
@@ -187,7 +187,8 @@ curl -X POST http://localhost:8001/predict -F "file=@image.jpg"
 | `api_secure.py` | Reference secure API (optional live demo) | Anytime |
 | `Part_1_Performance_Benchmarking.ipynb` | Teach latency/throughput/quantization | 1st |
 | `Part_2_Security_Hardening.ipynb` | Teach JWT/rate limiting/FGSM | 2nd |
-| `Part_3_Automated_Testing.ipynb` | Teach pytest, CI/CD | 3rd |
+| `Part_3_Automated_Testing.ipynb` | Teach pytest, quality gates, SLAs | 3rd |
+| `.github/workflows/ml-tests.yml` | CI/CD pipeline (runs on push) | Show after Part 3 |
 | `Lab_3_Production_Testing_Student.ipynb` | Student hands-on lab | 4th (lab time) |
 | `Lab_3_Production_Testing_Solution.ipynb` | Release after submission | After lab |
 
@@ -204,25 +205,6 @@ curl -X POST http://localhost:8001/predict -F "file=@image.jpg"
 | Rate limit (api_secure.py) | 10 req/min | Demo value |
 | Rate limit (lab) | 3 req/min | Easier to trigger in lab |
 | JWT expiry | 30 min | Standard session length |
-
----
-
-## Common Student Questions
-
-**Q: Why not use passlib?**
-A: `passlib[bcrypt]` is incompatible with `bcrypt>=4.0.0` (the currently installed version). We use `bcrypt` directly — `_bcrypt.hashpw()` and `_bcrypt.checkpw()`. Same security, no dependency conflict.
-
-**Q: Why do my tests show ~14% accuracy with random weights?**
-A: Correct — 1/7 classes = 14.3% chance level. The 10% threshold is intentionally below this so tests pass. In production, set `ACCURACY_THRESHOLD = 70.0`.
-
-**Q: The quantization only changed the model size a tiny bit. Why?**
-A: `quantize_dynamic` only quantizes `nn.Linear` layers. In ResNet-18 that is only the final FC layer (512 → 7 weights). For full INT8 coverage, you need static quantization with a calibration dataset — mention this as the next step.
-
-**Q: Can I use Redis for rate limiting in production?**
-A: Yes — the `RateLimiter` class here is in-memory and single-process only. For distributed deployments, replace `defaultdict(list)` with Redis sorted sets. The interface (`is_allowed(client_id)`) stays the same.
-
-**Q: Where is the SECRET_KEY stored in production?**
-A: Never in source code. Use `SECRET_KEY = os.getenv("JWT_SECRET_KEY")` and set it as an environment variable in your container or Azure Key Vault.
 
 ---
 
@@ -272,7 +254,7 @@ python -c "import torch; print(torch.__version__)"  # should be 2.1.0
 - [ ] All 26 tests pass in the test runner
 - [ ] Understands Arrange-Act-Assert pattern
 - [ ] Can explain what a quality gate blocks and why
-- [ ] Has read the GitHub Actions YAML and can explain each step
+- [ ] Has reviewed `.github/workflows/ml-tests.yml` and can explain each step
 
 **Lab 3**
 - [ ] All 13 test methods pass

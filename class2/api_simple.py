@@ -40,6 +40,7 @@ LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH", "./models")
 
 # ======================== Model ========================
 
+
 class CNNModel(nn.Module):
     """ResNet-18 classifier for ADAS road hazard detection"""
     def __init__(self, num_classes):

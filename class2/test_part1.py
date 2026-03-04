@@ -6,7 +6,6 @@ Run: pytest class2/test_part1.py -v
 
 import io
 import time
-import pytest
 from PIL import Image
 from fastapi.testclient import TestClient
 

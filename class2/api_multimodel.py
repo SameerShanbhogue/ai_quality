@@ -16,7 +16,6 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from collections import defaultdict
 
-import numpy as np
 import pandas as pd
 from PIL import Image
 
@@ -26,7 +25,6 @@ import torchvision.transforms as transforms
 from torchvision.models import resnet18
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
@@ -48,10 +46,11 @@ LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH", "./models")
 
 # Rate limiting: 5 requests per 60 seconds per client IP
 RATE_LIMIT_REQUESTS = 5
-RATE_LIMIT_WINDOW   = 60  # seconds
+RATE_LIMIT_WINDOW = 60  # seconds
 _rate_store: Dict[str, list] = defaultdict(list)
 
 # ======================== Models ========================
+
 
 class BaselineModel(nn.Module):
     """Version 1: Basic ResNet-18 without regularization"""

@@ -55,10 +55,6 @@ Opens at `http://localhost:8501`
 
 ---
 
-## How to Demo — Part by Part
-
----
-
 ### Part 1 (40 min) — Interface Layer: CNN API Deployment
 
 **Goal**: Students understand how to wrap a model in a REST endpoint with input validation.

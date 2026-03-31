@@ -1,3 +1,8 @@
+"""
+Download the dataset from https://www.kaggle.com/datasets/prabhusomsaitalari/dataset-for-driver-assistant-ml-models
+This file creates crops from the directort AI_QUALITY_ENGINEERING/<device>/*.jpg and saves them in the output directory in the format:
+dataset/"""
+
 import os
 import json
 import random

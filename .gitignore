@@ -1,3 +1,4 @@
 dataset/*
 *.png
 *.pyc
+.claude/*

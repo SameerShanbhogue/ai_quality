@@ -10,7 +10,7 @@
     "speed_breaker",
     "vehicle"
   ],
-  "test_accuracy_pct": 86.32,
+  "test_accuracy_pct": 82.91,
   "architecture": "ResNet-18",
   "input_size": [
     128,

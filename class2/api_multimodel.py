@@ -52,11 +52,29 @@ _rate_store: Dict[str, list] = defaultdict(list)
 # ======================== Models ========================
 
 
+def _replace_bn_with_identity(module):
+    """Recursively replace every nn.BatchNorm2d in `module` with nn.Identity.
+
+    Both checkpoints were trained by class1/Part_2_Overfitting_and_Generalization.ipynb
+    with BatchNorm stripped, so the serving architectures must strip BN too or
+    load_state_dict reports the BN keys as missing.
+    """
+    for name, child in module.named_children():
+        if isinstance(child, nn.BatchNorm2d):
+            setattr(module, name, nn.Identity())
+        else:
+            _replace_bn_with_identity(child)
+
+
 class BaselineModel(nn.Module):
-    """Version 1: Basic ResNet-18 without regularization"""
+    """Version 1: ResNet-18 with BatchNorm stripped, no other regularization.
+
+    Mirrors BaselineResNet in the training notebook.
+    """
     def __init__(self, num_classes):
         super().__init__()
         self.resnet = resnet18(weights=None)
+        _replace_bn_with_identity(self.resnet)
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
 
     def forward(self, x):
@@ -64,18 +82,35 @@ class BaselineModel(nn.Module):
 
 
 class DropoutModel(nn.Module):
-    """Version 2: ResNet-18 with Dropout for regularization"""
-    def __init__(self, num_classes, dropout_rate=0.5):
+    """Version 2: ResNet-18 (BN stripped) with Dropout2d on the late stages.
+
+    Mirrors DropoutResNet in the training notebook. Dropout is applied only
+    after layer3/layer4 plus a Dropout before the final Linear.
+    """
+    def __init__(self, num_classes, dropout_rate=0.3):
         super().__init__()
-        self.resnet = resnet18(weights=None)
-        in_features = self.resnet.fc.in_features
-        self.resnet.fc = nn.Sequential(
-            nn.Dropout(dropout_rate),
-            nn.Linear(in_features, num_classes)
+        base = resnet18(weights=None)
+        _replace_bn_with_identity(base)
+        self.stem = nn.Sequential(base.conv1, base.bn1, base.relu, base.maxpool)
+        self.layer1 = base.layer1
+        self.layer2 = base.layer2
+        self.layer3 = nn.Sequential(base.layer3, nn.Dropout2d(dropout_rate))
+        self.layer4 = nn.Sequential(base.layer4, nn.Dropout2d(dropout_rate))
+        self.avgpool = base.avgpool
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Dropout(0.5),
+            nn.Linear(base.fc.in_features, num_classes),
         )
 
     def forward(self, x):
-        return self.resnet(x)
+        x = self.stem(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.avgpool(x)
+        return self.fc(x)
 
 
 # ======================== Model Loading ========================

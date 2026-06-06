@@ -213,12 +213,31 @@ NUM_CLASSES = len(CLASS_NAMES)
 MODEL_VERSION = "v3.0-secure"
 
 
+def _replace_bn_with_identity(module):
+    """Recursively replace every nn.BatchNorm2d in `module` with nn.Identity.
+
+    The trained checkpoints (class2/models/v1) were produced with BatchNorm
+    stripped, so the serving architecture must strip BN too — otherwise
+    load_state_dict reports the BN keys as missing.
+    """
+    for name, child in module.named_children():
+        if isinstance(child, nn.BatchNorm2d):
+            setattr(module, name, nn.Identity())
+        else:
+            _replace_bn_with_identity(child)
+
+
 class ADASModel(nn.Module):
-    """ResNet-18 backbone for 7-class ADAS road hazard classification."""
+    """ResNet-18 (BatchNorm stripped) backbone for 7-class ADAS classification.
+
+    Mirrors the BaselineResNet/BaselineModel used in class1/class2 so the v1
+    checkpoint loads cleanly.
+    """
 
     def __init__(self, num_classes: int = 7):
         super().__init__()
-        self.resnet = resnet18(weights=None)  # Random weights for demo
+        self.resnet = resnet18(weights=None)
+        _replace_bn_with_identity(self.resnet)
         self.resnet.fc = nn.Linear(512, num_classes)
 
     def forward(self, x):

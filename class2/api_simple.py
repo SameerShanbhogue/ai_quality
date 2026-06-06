@@ -41,11 +41,31 @@ LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH", "./models")
 # ======================== Model ========================
 
 
+def _replace_bn_with_identity(module):
+    """Recursively replace every nn.BatchNorm2d in `module` with nn.Identity.
+
+    The v1 checkpoint was trained by class1/Part_2_Overfitting_and_Generalization.ipynb
+    with BatchNorm stripped (the "Baseline / No Regularization" model). The saved
+    state_dict therefore has no BN parameters, so the serving architecture must
+    strip BN too — otherwise load_state_dict reports the BN keys as missing.
+    """
+    for name, child in module.named_children():
+        if isinstance(child, nn.BatchNorm2d):
+            setattr(module, name, nn.Identity())
+        else:
+            _replace_bn_with_identity(child)
+
+
 class CNNModel(nn.Module):
-    """ResNet-18 classifier for ADAS road hazard detection"""
+    """ResNet-18 (BatchNorm stripped) classifier for ADAS road hazard detection.
+
+    Mirrors the BaselineResNet defined in the training notebook so the v1
+    checkpoint loads cleanly.
+    """
     def __init__(self, num_classes):
         super().__init__()
         self.resnet = resnet18(weights=None)
+        _replace_bn_with_identity(self.resnet)
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
 
     def forward(self, x):
